@@ -80,15 +80,19 @@ redis-server
 
 ---
 
-### 2. Execute o coletor de dados
+### 2. Abra 2 terminais e execute os comandos abaixo separadamente:
 
 ```bash
-python scripts/data_collector.py
+python manage.py runworker system_monitor
+```
+
+```bash
+python dashboard/broadcast.py
 ```
 
 ---
 
-### 3. Inicie o servidor Django
+### 3. Inicie o servidor Django em outro terminal
 
 ```bash
 python manage.py runserver
