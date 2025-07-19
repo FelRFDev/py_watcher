@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyWatcher - Dashboard de Monitoramento do Sistema</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'sans': ['Inter', 'sans-serif'],
+            'mono': ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            'dark': {
+              50: '#18181b',
+              100: '#27272a',
+              200: '#3f3f46',
+              300: '#52525b',
+              400: '#71717a',
+              500: '#a1a1aa',
+              600: '#d4d4d8',
+              700: '#e4e4e7',
+              800: '#f4f4f5',
+              900: '#fafafa',
+            },
+            'corporate': {
+              50: '#0c0c0d',
+              100: '#161618',
+              200: '#1f1f23',
+              300: '#28282d',
+              400: '#313138',
+              500: '#3a3a42',
+              600: '#43434d',
+              700: '#4c4c57',
+              800: '#555562',
+              900: '#5e5e6c',
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+            'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            pulseSubtle: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.8' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0b;
+    }
+    
+    .glass-dark {
+      background: rgba(12, 12, 13, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(39, 39, 42, 0.5);
+    }
+    
+    .card-professional {
+      background: linear-gradient(145deg, #0f0f10, #1a1a1c);
+      border: 1px solid #27272a;
+      transition: all 0.3s ease;
+    }
+    
+    .card-professional:hover {
+      border-color: #3f3f46;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+    
+    .progress-bar-dark {
+      background: #18181b;
+      border: 1px solid #27272a;
+    }
+    
+    .progress-fill-blue {
+      background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+    }
+    
+    .progress-fill-green {
+      background: linear-gradient(90deg, #166534, #22c55e);
+    }
+    
+    .progress-fill-orange {
+      background: linear-gradient(90deg, #ea580c, #f97316);
+    }
+    
+    .progress-fill-gray {
+      background: linear-gradient(90deg, #374151, #6b7280);
+    }
+    
+    .status-online {
+      background: #166534;
+      color: #22c55e;
+      border: 1px solid #22c55e;
+    }
+    
+    .status-offline {
+      background: #991b1b;
+      color: #ef4444;
+      border: 1px solid #ef4444;
+    }
+    
+    .text-accent-blue { color: #60a5fa; }
+    .text-accent-green { color: #4ade80; }
+    .text-accent-orange { color: #fb923c; }
+    .text-accent-gray { color: #9ca3af; }
+    
+    .border-accent-blue { border-color: #1e40af; }
+    .border-accent-green { border-color: #166534; }
+    .border-accent-orange { border-color: #ea580c; }
+    .border-accent-gray { border-color: #374151; }
+    
+    .loading-shimmer {
+      background: linear-gradient(90deg, transparent, rgba(39, 39, 42, 0.3), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    .table-dark {
+      background: #0f0f10;
+    }
+    
+    .table-dark th {
+      background: #18181b;
+      border-bottom: 1px solid #27272a;
+    }
+    
+    .table-dark td {
+      border-bottom: 1px solid #18181b;
+    }
+    
+    .table-dark tr:hover {
+      background: #161618;
+    }
+  </style>
+</head>
+<body class="bg-black text-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="glass-dark border-b border-gray-800 sticky top-0 z-50 animate-fade-in">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-900 to-blue-700 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-semibold text-gray-100">PyWatcher by FelRFDev</h1>
+            <p class="text-gray-400 text-sm">Dashboard de Monitoramento do Sistema</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-6">
+          <div class="flex items-center space-x-2">
+            <div id="connectionStatus" class="w-2 h-2 bg-green-500 rounded-full animate-pulse-subtle"></div>
+            <span class="text-gray-300 text-sm">Sistema Online</span>
+          </div>
+          <div class="bg-gray-900 border border-gray-700 px-3 py-1 rounded">
+            <span class="text-gray-300 text-sm metric-value" id="currentTime">--:--:--</span>
+          </div>
+          <button onclick="refreshData()" class="flex items-center space-x-1 bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded transition-colors">
+            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span class="text-gray-300 text-sm">Atualizar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- System Overview -->
+    <section class="mb-8 animate-slide-up">
+      <div class="card-professional rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
+          <svg class="w-5 h-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+          </svg>
+          Informações do Sistema
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4">
+            <div class="text-gray-400 text-sm mb-1">Hostname</div>
+            <div id="hostname" class="text-gray-100 font-medium loading-shimmer rounded px-2 py-1">Carregando...</div>
+          </div>
+          
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4">
+            <div class="text-gray-400 text-sm mb-1">Sistema Operacional</div>
+            <div id="os" class="text-gray-100 font-medium loading-shimmer rounded px-2 py-1">Carregando...</div>
+          </div>
+          
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4">
+            <div class="text-gray-400 text-sm mb-1">Tempo de Atividade</div>
+            <div id="uptime" class="text-gray-100 font-medium loading-shimmer rounded px-2 py-1">Carregando...</div>
+          </div>
+          
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4">
+            <div class="text-gray-400 text-sm mb-1">CPU Cores / Threads</div>
+            <div id="cores_threads" class="text-gray-100 font-medium loading-shimmer rounded px-2 py-1">Carregando...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance Metrics -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <!-- CPU Usage -->
+      <div class="card-professional rounded-lg p-6 border-accent-blue animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-gray-100 flex items-center">
+            <svg class="w-4 h-4 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            CPU
+          </h3>
+          <span id="cpu_total_percent" class="text-accent-blue metric-value text-lg">0.0%</span>
+        </div>
+        
+        <div class="mb-4">
+          <div class="flex justify-between text-xs text-gray-400 mb-2">
+            <span>Utilização</span>
+            <span id="cpu_percent_label" class="metric-value">0.0%</span>
+          </div>
+          <div class="progress-bar-dark rounded-full h-2 overflow-hidden">
+            <div id="cpu_total_progress" class="h-full progress-fill-blue rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="h-32 bg-gray-900 rounded border border-gray-700 p-2">
+          <canvas id="cpuChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Memory Usage -->
+      <div class="card-professional rounded-lg p-6 border-accent-green animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-gray-100 flex items-center">
+            <svg class="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            Memória
+          </h3>
+          <span id="ram_percent" class="text-accent-green metric-value text-lg">0.0%</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+          <div>
+            <div id="ram_used_gb" class="text-sm font-medium text-gray-100 metric-value">0.0 GB</div>
+            <div class="text-xs text-gray-400">Usado</div>
+          </div>
+          <div>
+            <div id="ram_total_gb" class="text-sm font-medium text-gray-100 metric-value">0.0 GB</div>
+            <div class="text-xs text-gray-400">Total</div>
+          </div>
+        </div>
+        
+        <div class="h-24 bg-gray-900 rounded border border-gray-700 p-2">
+          <canvas id="ramChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Storage Usage -->
+      <div class="card-professional rounded-lg p-6 border-accent-orange animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-gray-100 flex items-center">
+            <svg class="w-4 h-4 text-orange-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+            </svg>
+            Armazenamento
+          </h3>
+          <span id="disk_percent" class="text-accent-orange metric-value text-lg">0.0%</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+          <div>
+            <div id="disk_used_gb" class="text-sm font-medium text-gray-100 metric-value">0.0 GB</div>
+            <div class="text-xs text-gray-400">Usado</div>
+          </div>
+          <div>
+            <div id="disk_total_gb" class="text-sm font-medium text-gray-100 metric-value">0.0 GB</div>
+            <div class="text-xs text-gray-400">Total</div>
+          </div>
+        </div>
+        
+        <div class="h-24 bg-gray-900 rounded border border-gray-700 p-2">
+          <canvas id="diskChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Network Stats -->
+      <div class="card-professional rounded-lg p-6 border-accent-gray animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-gray-100 flex items-center">
+            <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+            </svg>
+            Rede
+          </h3>
+          <span id="net_connections" class="text-accent-gray metric-value text-lg">0</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+          <div>
+            <div id="net_sent" class="text-sm font-medium text-gray-100 metric-value">0.0 MB/s</div>
+            <div class="text-xs text-gray-400">Upload</div>
+          </div>
+          <div>
+            <div id="net_recv" class="text-sm font-medium text-gray-100 metric-value">0.0 MB/s</div>
+            <div class="text-xs text-gray-400">Download</div>
+          </div>
+        </div>
+        
+        <div class="h-24 bg-gray-900 rounded border border-gray-700 p-2">
+          <canvas id="networkChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Temperature Section -->
+    <section class="mb-8 animate-slide-up">
+      <div class="card-professional rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
+          <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Monitoramento de Temperatura
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+            <div class="text-gray-400 text-sm mb-1">CPU</div>
+            <div id="cpu_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+          </div>
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+            <div class="text-gray-400 text-sm mb-1">GPU</div>
+            <div id="gpu_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+          </div>
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+            <div class="text-gray-400 text-sm mb-1">Motherboard</div>
+            <div id="mb_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+          </div>
+          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+            <div class="text-gray-400 text-sm mb-1">SSD</div>
+            <div id="ssd_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+          </div>
+        </div>
+        
+        <div class="h-48 bg-gray-900 rounded border border-gray-700 p-4">
+          <canvas id="tempChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process List -->
+    <section class="animate-slide-up">
+      <div class="card-professional rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
+          <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+          </svg>
+          Processos do Sistema
+        </h3>
+        
+        <div id="processList" class="table-dark rounded border border-gray-700 loading-shimmer p-4">
+          Carregando lista de processos...
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Configurações
+    const config = {
+      updateInterval: 2000,
+      maxHistory: 60,
+      wsEndpoint: `ws://${window.location.hostname}:${window.location.port}/ws/system-monitor/`
+    };
+
+    // Estado da aplicação
+    const state = {
+      cpuHistory: [],
+      memoryHistory: [],
+      diskHistory: [],
+      networkHistory: [],
+      temperatureHistory: [],
+      connectionStatus: 'disconnected',
+      charts: {},
+      ws: null,
+      reconnectAttempts: 0,
+      maxReconnectAttempts: 5
+    };
+
+    // Configuração dos gráficos
+    const chartDefaults = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#9ca3af',
+            font: {
+              family: 'JetBrains Mono',
+              size: 10
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(39, 39, 42, 0.5)',
+            borderColor: 'rgba(39, 39, 42, 0.8)'
+          },
+          ticks: {
+            color: '#6b7280',
+            font: {
+              family: 'JetBrains Mono',
+              size: 9
+            }
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(39, 39, 42, 0.5)',
+            borderColor: 'rgba(39, 39, 42, 0.8)'
+          },
+          ticks: {
+            color: '#6b7280',
+            font: {
+              family: 'JetBrains Mono',
+              size: 9
+            }
+          }
+        }
+      }
+    };
+
+    // Atualiza o relógio
+    function updateClock() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('pt-BR', { hour12: false });
+      document.getElementById('currentTime').textContent = timeString;
+    }
+
+    // Inicializa os gráficos
+    function initializeCharts() {
+      // Gráfico de CPU
+      const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+      state.charts.cpu = new Chart(cpuCtx, {
+        type: 'line',
+        data: {
+          labels: Array(config.maxHistory).fill(''),
+          datasets: [{
+            label: 'CPU %',
+            data: Array(config.maxHistory).fill(0),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 2,
+            borderWidth: 1.5
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              ...chartDefaults.scales.y,
+              beginAtZero: true,
+              max: 100
+            },
+            x: { display: false }
+          }
+        }
+      });
+
+      // Gráfico de Memória
+      const ramCtx = document.getElementById('ramChart').getContext('2d');
+      state.charts.ram = new Chart(ramCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Usado', 'Livre'],
+          datasets: [{
+            data: [0, 100],
+            backgroundColor: [
+              '#22c55e',
+              '#374151'
+            ],
+            borderColor: [
+              '#22c55e',
+              '#374151'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          cutout: '70%',
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Gráfico de Disco
+      const diskCtx = document.getElementById('diskChart').getContext('2d');
+      state.charts.disk = new Chart(diskCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Usado', 'Livre'],
+          datasets: [{
+            data: [0, 100],
+            backgroundColor: [
+              '#f97316',
+              '#374151'
+            ],
+            borderColor: [
+              '#f97316',
+              '#374151'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          cutout: '70%',
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Gráfico de Rede
+      const networkCtx = document.getElementById('networkChart').getContext('2d');
+      state.charts.network = new Chart(networkCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Up', 'Down'],
+          datasets: [{
+            label: 'MB/s',
+            data: [0, 0],
+            backgroundColor: [
+              '#6b7280',
+              '#9ca3af'
+            ],
+            borderColor: [
+              '#6b7280',
+              '#9ca3af'
+            ],
+            borderWidth: 1,
+            borderRadius: 2
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            ...chartDefaults.scales,
+            y: {
+              ...chartDefaults.scales.y,
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      // Gráfico de Temperatura
+      const tempCtx = document.getElementById('tempChart').getContext('2d');
+      state.charts.temp = new Chart(tempCtx, {
+        type: 'line',
+        data: {
+          labels: Array(config.maxHistory).fill(''),
+          datasets: [
+            {
+              label: 'CPU °C',
+              data: Array(config.maxHistory).fill(0),
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              tension: 0.3,
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 2,
+              borderWidth: 1.5
+            },
+            {
+              label: 'GPU °C',
+              data: Array(config.maxHistory).fill(0),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.3,
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 2,
+              borderWidth: 1.5
+            }
+          ]
+        },
+        options: {
+          ...chartDefaults,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#9ca3af',
+                font: {
+                  family: 'JetBrains Mono',
+                  size: 9
+                },
+                padding: 8
+              }
+            }
+          },
+          scales: {
+            ...chartDefaults.scales,
+            y: {
+              ...chartDefaults.scales.y,
+              beginAtZero: true
+            },
+            x: { display: false }
+          }
+        }
+      });
+    }
+
+    // Formatação de dados
+    function formatBytes(bytes, decimals = 2) {
+      if (!bytes || isNaN(bytes)) return '0 Bytes';
+      if (bytes === 0) return '0 Bytes';
+      
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      const formattedValue = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+      return `${formattedValue} ${sizes[i]}`;
+    }
+
+    function formatUptime(seconds) {
+      if (!seconds || isNaN(seconds)) return '0s';
+      
+      const days = Math.floor(seconds / (3600 * 24));
+      const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      
+      let result = [];
+      if (days > 0) result.push(`${days}d`);
+      if (hours > 0) result.push(`${hours}h`);
+      if (minutes > 0) result.push(`${minutes}m`);
+      
+      return result.join(' ') || '< 1m';
+    }
+
+    // Remove efeito de loading
+    function removeLoadingEffect(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.remove('loading-shimmer');
+      }
+    }
+
+    // Atualiza o status da conexão
+    function updateConnectionStatus(status) {
+      state.connectionStatus = status;
+      const statusElement = document.getElementById('connectionStatus');
+      const statusText = statusElement.nextElementSibling;
+      
+      if (status === 'connected') {
+        statusElement.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse-subtle';
+        statusText.textContent = 'Sistema Online';
+        state.reconnectAttempts = 0;
+      } else if (status === 'error') {
+        statusElement.className = 'w-2 h-2 bg-red-500 rounded-full animate-pulse-subtle';
+        statusText.textContent = 'Erro de Conexão';
+      } else {
+        statusElement.className = 'w-2 h-2 bg-yellow-500 rounded-full animate-pulse-subtle';
+        statusText.textContent = 'Conectando...';
+      }
+    }
+
+    // Conecta ao WebSocket
+    function connectWebSocket() {
+      updateConnectionStatus('connecting');
+      
+      state.ws = new WebSocket(config.wsEndpoint);
+      
+      state.ws.onopen = () => {
+        console.log('WebSocket conectado');
+        updateConnectionStatus('connected');
+      };
+      
+      state.ws.onclose = () => {
+        console.log('WebSocket desconectado');
+        updateConnectionStatus('disconnected');
+        
+        if (state.reconnectAttempts < state.maxReconnectAttempts) {
+          state.reconnectAttempts++;
+          const delay = Math.min(1000 * state.reconnectAttempts, 10000);
+          console.log(`Tentando reconectar em ${delay/1000} segundos... (tentativa ${state.reconnectAttempts})`);
+          setTimeout(connectWebSocket, delay);
+        }
+      };
+      
+      state.ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        updateConnectionStatus('error');
+      };
+      
+      state.ws.onmessage = (msg) => {
+        try {
+          const data = JSON.parse(msg.data);
+          console.log('Dados recebidos:', data);
+          
+          if (data.type === 'static_data') {
+            handleStaticData(data);
+          } else if (data.type === 'dynamic_data') {
+            handleDynamicData(data);
+          }
+        } catch (e) {
+          console.error('Erro ao processar mensagem:', e);
+        }
+      };
+    }
+
+    // Manipula dados estáticos
+    function handleStaticData(data) {
+      document.getElementById('hostname').textContent = data.hostname || 'N/A';
+      document.getElementById('os').textContent = data.os || 'N/A';
+      document.getElementById('uptime').textContent = formatUptime(data.uptime);
+      document.getElementById('cores_threads').textContent = `${data.cpu_cores || 0} / ${data.cpu_threads || 0}`;
+      
+      ['hostname', 'os', 'uptime', 'cores_threads'].forEach(removeLoadingEffect);
+    }
+
+    // Manipula dados dinâmicos
+    function handleDynamicData(data) {
+      const now = new Date().getTime();
+      
+      // CPU
+      const cpuUsage = data.cpu_per_core_usage.reduce((a, b) => a + b, 0) / data.cpu_per_core_usage.length;
+      document.getElementById('cpu_total_percent').textContent = `${cpuUsage.toFixed(1)}%`;
+      document.getElementById('cpu_percent_label').textContent = `${cpuUsage.toFixed(1)}%`;
+      document.getElementById('cpu_total_progress').style.width = `${cpuUsage}%`;
+      
+      state.cpuHistory.push(cpuUsage);
+      if (state.cpuHistory.length > config.maxHistory) state.cpuHistory.shift();
+      state.charts.cpu.data.datasets[0].data = state.cpuHistory;
+      state.charts.cpu.update('none');
+
+      // Memória
+      const memoryPercent = data.ram_percent || 0;
+      const memoryTotal = data.ram_total_gb * 1024 * 1024 * 1024 || 0;
+      const memoryUsed = data.ram_used_gb * 1024 * 1024 * 1024 || 0;
+      
+      document.getElementById('ram_percent').textContent = `${memoryPercent.toFixed(1)}%`;
+      document.getElementById('ram_used_gb').textContent = formatBytes(memoryUsed);
+      document.getElementById('ram_total_gb').textContent = formatBytes(memoryTotal);
+      
+      state.charts.ram.data.datasets[0].data = [memoryPercent, 100 - memoryPercent];
+      state.charts.ram.update('none');
+
+      // Disco
+      const diskPercent = data.disk_percent || 0;
+      const diskTotal = data.disk_total_gb * 1024 * 1024 * 1024 || 0;
+      const diskUsed = data.disk_used_gb * 1024 * 1024 * 1024 || 0;
+      
+      document.getElementById('disk_percent').textContent = `${diskPercent.toFixed(1)}%`;
+      document.getElementById('disk_used_gb').textContent = formatBytes(diskUsed);
+      document.getElementById('disk_total_gb').textContent = formatBytes(diskTotal);
+      
+      state.charts.disk.data.datasets[0].data = [diskPercent, 100 - diskPercent];
+      state.charts.disk.update('none');
+
+      // Rede
+      const uploadSpeed = data.net_sent_rate * 1024 || 0; // Convert KB to bytes
+      const downloadSpeed = data.net_recv_rate * 1024 || 0; // Convert KB to bytes
+      const connections = data.net_connections || 0;
+      
+      document.getElementById('net_sent').textContent = `${(uploadSpeed / (1024 * 1024)).toFixed(1)} MB/s`;
+      document.getElementById('net_recv').textContent = `${(downloadSpeed / (1024 * 1024)).toFixed(1)} MB/s`;
+      document.getElementById('net_connections').textContent = connections;
+      
+      state.charts.network.data.datasets[0].data = [
+        uploadSpeed / (1024 * 1024),
+        downloadSpeed / (1024 * 1024)
+      ];
+      state.charts.network.update('none');
+
+      // Temperatura
+      const cpuTemp = data.cpu_temp || 0;
+      const gpuTemp = data.gpu_temp || 0;
+      
+      document.getElementById('cpu_temp').textContent = `${cpuTemp.toFixed(1)} °C`;
+      document.getElementById('gpu_temp').textContent = `${gpuTemp.toFixed(1)} °C`;
+      
+      state.charts.temp.data.datasets[0].data.push(cpuTemp);
+      state.charts.temp.data.datasets[1].data.push(gpuTemp);
+      
+      if (state.charts.temp.data.datasets[0].data.length > config.maxHistory) {
+        state.charts.temp.data.datasets[0].data.shift();
+        state.charts.temp.data.datasets[1].data.shift();
+      }
+      state.charts.temp.update('none');
+
+      // Processos
+      updateProcessList(data.top_processes || []);
+    }
+
+    function updateProcessList(processes) {
+      const processList = document.getElementById('processList');
+      processList.classList.remove('loading-shimmer');
+      
+      if (!processes || processes.length === 0) {
+        processList.innerHTML = '<div class="text-center text-gray-400 py-4">Nenhum processo encontrado</div>';
+        return;
+      }
+      
+      const table = document.createElement('table');
+      table.className = 'w-full border-collapse table-dark';
+      
+      const header = table.createTHead();
+      const headerRow = header.insertRow();
+      
+      ['PID', 'Nome', 'CPU %', 'Memória %'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        th.className = 'text-left p-3 text-gray-400 font-medium text-sm';
+        headerRow.appendChild(th);
+      });
+      
+      const tbody = table.createTBody();
+      processes.slice(0, 15).forEach((proc, index) => {
+        const row = tbody.insertRow();
+        row.className = 'hover:bg-gray-800 transition-colors';
+        
+        [proc.pid, proc.name, proc.cpu_percent.toFixed(1), proc.memory_percent.toFixed(1)].forEach((text, cellIndex) => {
+          const cell = row.insertCell();
+          cell.textContent = text;
+          cell.className = `p-3 text-sm ${cellIndex === 1 ? 'text-gray-100 font-medium' : 'text-gray-300 font-mono'}`;
+        });
+      });
+      
+      processList.innerHTML = '';
+      processList.appendChild(table);
+    }
+
+    // Atualiza dados manualmente
+    function refreshData() {
+      if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+        state.ws.send(JSON.stringify({ type: 'refresh' }));
+      }
+      
+      // Feedback visual
+      const refreshBtn = event.target.closest('button');
+      if (refreshBtn) {
+        const icon = refreshBtn.querySelector('svg');
+        if (icon) {
+          icon.style.transform = 'rotate(360deg)';
+          icon.style.transition = 'transform 0.5s ease';
+          setTimeout(() => {
+            icon.style.transform = 'rotate(0deg)';
+          }, 500);
+        }
+      }
+    }
+
+    // Inicializa o dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+      updateClock();
+      setInterval(updateClock, 1000);
+      
+      initializeCharts();
+      connectWebSocket();
+      
+      // Atualiza o uptime a cada segundo
+      setInterval(() => {
+        const uptimeElement = document.getElementById('uptime');
+        if (uptimeElement && !uptimeElement.classList.contains('loading-shimmer')) {
+          const currentUptime = uptimeElement.textContent;
+          // Implemente lógica para incrementar o uptime se necessário
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
