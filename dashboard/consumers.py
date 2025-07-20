@@ -4,6 +4,9 @@ import socket
 import platform
 import asyncio
 import time
+import glob
+import os
+import pandas as pd
 from datetime import datetime
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.exceptions import StopConsumer
@@ -55,12 +58,39 @@ class SystemMonitorConsumer(AsyncWebsocketConsumer):
 
     async def send_dynamic_data(self):
         try:
+            # Coletar métricas básicas do sistema
             mem = psutil.virtual_memory()
             disk = self.get_disk_usage()
             net = psutil.net_io_counters()
+            temp_data = self.get_temperature_data()
             
+            # Coletar informações dos processos
+            processes = []
+            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent', 'username', 'status']):
+                try:
+                    processes.append({
+                        'pid': proc.info['pid'],
+                        'name': proc.info['name'],
+                        'cpu_percent': round(proc.info['cpu_percent'], 1),
+                        'memory_percent': round(proc.info['memory_percent'], 1),
+                        'username': proc.info['username'],
+                        'status': proc.info['status']
+
+                    })
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    continue
+            
+            # Ordenar por uso de CPU e pegar os top 10
+            top_processes = sorted(
+                processes,
+                key=lambda p: p['cpu_percent'],
+                reverse=True
+            )[:10]
+
+            # Construir payload final
             dynamic = {
                 "type": "dynamic_data",
+                # Métricas do sistema
                 "cpu_per_core_usage": [x for x in psutil.cpu_percent(percpu=True)],
                 "cpu_total_percent": psutil.cpu_percent(),
                 "ram_percent": mem.percent,
@@ -72,10 +102,18 @@ class SystemMonitorConsumer(AsyncWebsocketConsumer):
                 "net_sent_rate": round(net.bytes_sent / 1024, 1),
                 "net_recv_rate": round(net.bytes_recv / 1024, 1),
                 "net_connections": len(psutil.net_connections()),
+                # Temperaturas
+                "cpu_temp": temp_data.get('cpu_temp'),
+                "cpu_hotspot_temp": temp_data.get('cpu_hotspot_temp'),
+                "gpu_temp": temp_data.get('gpu_temp'),
+                "ssd_temp": temp_data.get('ssd_temp'),
+                # Processos
+                "top_processes": top_processes,
                 "status": "connected"
             }
-            
+
             await self.send(text_data=json.dumps(dynamic))
+            
         except Exception as e:
             print(f"Error collecting dynamic data: {e}")
             await self.send(text_data=json.dumps({
@@ -144,3 +182,40 @@ class SystemMonitorConsumer(AsyncWebsocketConsumer):
             return partitions[0].mountpoint if partitions else "N/A"
         except Exception:
             return "N/A"
+    
+
+    
+    def get_temperature_data(self):
+        REL_PATH = 'C:/Users/T-Gamer/Desktop/PROJETOS_PROGRAMACAO/py_watcher/py_watcher/OpenHardwareMonitor/'
+        try:
+            files = glob.glob(os.path.join(REL_PATH,'OpenHardwareMonitorLog-*.csv'))
+            if not files: return {}
+            latest = max(files, key=os.path.getctime)
+            df = pd.read_csv(latest)
+            row = df.iloc[-1]
+            
+            temp_data = {
+                'cpu_temp': None,
+                'cpu_hotspot_temp': None,
+                'gpu_temp': None,
+                'ssd_temp': None
+            }
+            
+            for name, value in row.items():
+                try:
+                    v = float(value)
+                    if '/amdcpu/0/temperature/0' in name:
+                        temp_data['cpu_temp'] = round(v, 1)
+                    elif '/amdcpu/0/temperature/4' in name:
+                        temp_data['cpu_hotspot_temp'] = round(v, 1)
+                    elif '/atigpu/0/temperature/0' in name:
+                        temp_data['gpu_temp'] = round(v, 1)
+                    elif '/hdd/0/temperature/0' in name:
+                        temp_data['ssd_temp'] = round(v, 1)
+                except:
+                    continue
+            
+            return temp_data
+        except Exception as e:
+            print(f"Error reading temperature data: {e}")
+            return {}
