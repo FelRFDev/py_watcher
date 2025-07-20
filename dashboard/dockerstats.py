@@ -1,6 +1,34 @@
 import docker
 
 def get_docker_info():
+    """
+    Coleta informações e estatísticas de todos os containers Docker disponíveis no host.
+
+    Retorna um dicionário com duas chaves:
+    - 'containers': lista de dicionários com dados de cada container, contendo:
+        * 'id': ID curto do container
+        * 'name': nome do container
+        * 'status': status atual (ex: running, paused, exited)
+        * 'image': tag da imagem usada ou "Sem tag" se não existir
+        * 'cpu_percent': uso de CPU em percentual calculado pelo _calc_cpu_percent
+        * 'mem_usage': uso de memória em bytes
+        * 'mem_limit': limite de memória em bytes
+    Se ocorrer erro ao coletar stats, valores padrão zerados são retornados para o container e o erro é impresso.
+
+    - 'summary': dicionário com contagem dos containers por status:
+        * 'total': total de containers
+        * 'running': containers em execução
+        * 'paused': containers pausados
+        * 'exited': containers finalizados
+
+    Usa a API oficial do Docker via python 'docker.from_env()'.
+
+    Uso típico:
+        dados = get_docker_info()
+        print(dados['summary'])
+        for c in dados['containers']:
+            print(c['name'], c['cpu_percent'], c['mem_usage'])
+    """
     client = docker.from_env()
     containers = client.containers.list(all=True)
 
@@ -46,6 +74,20 @@ def get_docker_info():
     }
 
 def _calc_cpu_percent(stats):
+    """
+    Calcula o percentual de uso de CPU para um container Docker com base nas estatísticas fornecidas.
+
+    A fórmula compara o uso total de CPU entre duas medições consecutivas, normalizando pelo número de CPUs e 
+    tempo do sistema, retornando um valor percentual arredondado com duas casas decimais.
+
+    Se houver erros (dados ausentes ou divisão por zero), retorna 0.0.
+
+    Parâmetros:
+        stats (dict): dicionário de estatísticas coletadas do container (ex: container.stats(stream=False))
+
+    Retorna:
+        float: percentual de uso da CPU.
+    """
     try:
         cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - stats['precpu_stats']['cpu_usage']['total_usage']
         system_delta = stats['cpu_stats']['system_cpu_usage'] - stats['precpu_stats']['system_cpu_usage']
@@ -54,4 +96,3 @@ def _calc_cpu_percent(stats):
     except (KeyError, ZeroDivisionError):
         pass
     return 0.0
-

@@ -1,11 +1,33 @@
 import os, sys, asyncio, json, psutil
 import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 django.setup()
 from channels.layers import get_channel_layer
 
 async def broadcast_loop():
+    """
+    Loop assíncrono que coleta métricas do sistema a cada segundo e as transmite via Django Channels.
+
+    Métricas coletadas:
+    - Uso da CPU geral e por núcleo (%)
+    - Uso da memória RAM (% e GB usados/total)
+    - Uso do disco (% e GB usados/total)
+    - Taxa de envio e recebimento de dados na rede (KB/s)
+    - Temperatura média da CPU (se disponível)
+    - Top 5 processos ordenados por uso de CPU (PID, nome, % CPU, % memória)
+
+    O payload das métricas é serializado em JSON e enviado para o grupo 'system_monitor' 
+    através do channel layer do Django Channels.
+
+    O loop roda indefinidamente com pausa de 1 segundo entre as iterações.
+
+    Exceções na coleta de dados do disco e processos são capturadas para evitar falhas.
+
+    Uso típico:
+        Executar este script para iniciar a transmissão contínua das métricas do sistema.
+    """
     layer = get_channel_layer()
     prev_net = psutil.net_io_counters()
 
@@ -26,17 +48,17 @@ async def broadcast_loop():
 
         # Rede
         cur_net = psutil.net_io_counters()
-        sent_rate = (cur_net.bytes_sent - prev_net.bytes_sent) / 1024
-        recv_rate = (cur_net.bytes_recv - prev_net.bytes_recv) / 1024
+        sent_rate = (cur_net.bytes_sent - prev_net.bytes_sent) / 1024  # KB/s enviados
+        recv_rate = (cur_net.bytes_recv - prev_net.bytes_recv) / 1024  # KB/s recebidos
         prev_net = cur_net
 
-        # Temperatura
+        # Temperatura da CPU
         temps = psutil.sensors_temperatures()
         cpu_temp = None
         if 'coretemp' in temps:
             cpu_temp = sum(t.current for t in temps['coretemp']) / len(temps['coretemp'])
 
-        # Top processos
+        # Top 5 processos por CPU
         procs = []
         for proc in psutil.process_iter(['pid','name','cpu_percent','memory_percent']):
             try:
@@ -69,5 +91,9 @@ async def broadcast_loop():
         await asyncio.sleep(1)
 
 if __name__ == "__main__":
+    """
+    Ponto de entrada do script.
+    Inicializa o loop assíncrono de broadcast de métricas do sistema.
+    """
     print("⚙️ Broadcast iniciando...")
     asyncio.run(broadcast_loop())
