@@ -215,7 +215,7 @@ class SystemMonitorConsumer(AsyncWebsocketConsumer):
         # Insira o caminho para a pasta do programa Open Hardware aqui
         # A pasta do programa deve obrigatoriamente estar na pasta raiz do projeto
         # Ex: C:/Users/seu pc/pasta do projeto/OpenHardwareMonitor/
-        REL_PATH = 'C:/Users/T-Gamer/Desktop/PROJETOS_PROGRAMACAO/py_watcher/py_watcher/OpenHardwareMonitor/'
+        REL_PATH = ''
         try:
             files = glob.glob(os.path.join(REL_PATH, 'OpenHardwareMonitorLog-*.csv'))
             if not files:
