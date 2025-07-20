@@ -1,5 +1,8 @@
 # 🔍 PyWatcher - Dashboard de Monitoramento do Sistema (Django + Redis + WSL)
 
+![Status](https://img.shields.io/badge/status-EM%20DESENVOLVIMENTO-yellow?style=for-the-badge)
+
+
 Este é um projeto de dashboard de monitoramento do sistema, desenvolvido com Django, que exibe o uso de CPU, RAM, disco, **temperatura de componentes (GPU, CPU, placa-mãe)** e outras informações do sistema operacional em tempo real. Utiliza Redis para comunicação assíncrona entre os processos e coleta os dados diretamente do sistema operacional. Também permite o monitoramento de **containers Docker** com suporte básico.
 
 ---
