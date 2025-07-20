@@ -201,6 +201,30 @@
       border-top: 1px solid #27272a;
       margin: 0.25rem 0;
     }
+    .table-dark {
+    background: #0f0f10;
+}
+
+.table-dark th {
+    background: #18181b;
+    border-bottom: 1px solid #27272a;
+}
+
+.table-dark td {
+    border-bottom: 1px solid #18181b;
+}
+
+.table-dark tr:hover {
+    background: #161618 !important;
+}
+
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    display: inline-block;
+}
   </style>
 </head>
 <body class="bg-black text-gray-100 min-h-screen">
@@ -416,56 +440,81 @@
       </div>
     </section>
 
-    <!-- Temperature Section -->
-    <section class="mb-8 animate-slide-up">
-      <div class="card-professional rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
-          <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-          Monitoramento de Temperatura
-        </h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-1">CPU</div>
-            <div id="cpu_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
-          </div>
-          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-1">GPU</div>
-            <div id="gpu_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
-          </div>
-          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-1">Motherboard</div>
-            <div id="mb_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
-          </div>
-          <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
-            <div class="text-gray-400 text-sm mb-1">SSD</div>
-            <div id="ssd_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
-          </div>
-        </div>
-        
-        <div class="h-48 bg-gray-900 rounded border border-gray-700 p-4">
-          <canvas id="tempChart" class="w-full h-full"></canvas>
-        </div>
+    <!-- Temperature Section - Modificada para exibir dados da view -->
+    <!-- Temperature Section - Modificada para exibir apenas temperaturas principais -->
+
+<!-- Temperature Section - Atualizada para exibir dados dinâmicos -->
+<section class="mb-8 animate-slide-up">
+  <div class="card-professional rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
+      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      Monitoramento de Temperatura
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <!-- CPU Temperature -->
+      <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+        <div class="text-gray-400 text-sm mb-1">CPU</div>
+        <div id="cpu_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
       </div>
-    </section>
+      
+      <!-- CPU Package (Hotspot) -->
+      <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+        <div class="text-gray-400 text-sm mb-1">CPU (Hotspot)</div>
+        <div id="cpu_hotspot_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+      </div>
+      
+      <!-- GPU Temperature -->
+      <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+        <div class="text-gray-400 text-sm mb-1">GPU</div>
+        <div id="gpu_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+      </div>
+      
+      <!-- SSD Temperature -->
+      <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center">
+        <div class="text-gray-400 text-sm mb-1">SSD</div>
+        <div id="ssd_temp" class="text-gray-100 font-semibold metric-value text-lg">N/A °C</div>
+      </div>
+    </div>
+    
+    <div class="h-48 bg-gray-900 rounded border border-gray-700 p-4">
+      <canvas id="tempChart" class="w-full h-full"></canvas>
+    </div>
+  </div>
+</section>
 
     <!-- Process List -->
-    <section class="animate-slide-up">
-      <div class="card-professional rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
-          <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-          </svg>
-          Processos do Sistema
-        </h3>
-        
-        <div id="processList" class="table-dark rounded border border-gray-700 loading-shimmer p-4">
-          Carregando lista de processos...
-        </div>
-      </div>
-    </section>
+    <!-- Process List Section -->
+<section class="animate-slide-up">
+  <div class="card-professional rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-100 mb-6 flex items-center">
+      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+      </svg>
+      Processos do Sistema (Top 10 por CPU)
+    </h3>
+    
+    <div class="table-dark rounded border border-gray-700 overflow-hidden">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-800">
+            <th class="text-left p-3 text-gray-400 font-medium text-sm">PID</th>
+            <th class="text-left p-3 text-gray-400 font-medium text-sm">Nome</th>
+            <th class="text-left p-3 text-gray-400 font-medium text-sm">CPU %</th>
+            <th class="text-left p-3 text-gray-400 font-medium text-sm">Memória %</th>
+            <th class="text-left p-3 text-gray-400 font-medium text-sm">Username</th>
+            <th class="text-left p-3 text-gray-400 font-medium text-sm">Status</th>
+          </tr>
+        </thead>
+        <tbody id="processList">
+          <!-- Os processos serão inseridos aqui via JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
   </main>
 
   <script>
@@ -892,21 +941,27 @@
       ];
       state.charts.network.update('none');
 
-      // Temperatura
-      const cpuTemp = data.cpu_temp || 0;
-      const gpuTemp = data.gpu_temp || 0;
-      
-      document.getElementById('cpu_temp').textContent = `${cpuTemp.toFixed(1)} °C`;
-      document.getElementById('gpu_temp').textContent = `${gpuTemp.toFixed(1)} °C`;
-      
-      state.charts.temp.data.datasets[0].data.push(cpuTemp);
-      state.charts.temp.data.datasets[1].data.push(gpuTemp);
-      
-      if (state.charts.temp.data.datasets[0].data.length > config.maxHistory) {
+
+      // Temperatura - atualização em tempo real
+    const cpuTemp = data.cpu_temp || 0;
+    const cpuHotspotTemp = data.cpu_hotspot_temp || 0;
+    const gpuTemp = data.gpu_temp || 0;
+    const ssdTemp = data.ssd_temp || 0;
+
+    document.getElementById('cpu_temp').textContent = `${cpuTemp.toFixed(1)} °C`;
+    document.getElementById('cpu_hotspot_temp').textContent = `${cpuHotspotTemp.toFixed(1)} °C`;
+    document.getElementById('gpu_temp').textContent = `${gpuTemp.toFixed(1)} °C`;
+    document.getElementById('ssd_temp').textContent = `${ssdTemp.toFixed(1)} °C`;
+
+    // Atualiza o gráfico de temperatura
+    state.charts.temp.data.datasets[0].data.push(cpuTemp);
+    state.charts.temp.data.datasets[1].data.push(gpuTemp);
+    
+    if (state.charts.temp.data.datasets[0].data.length > config.maxHistory) {
         state.charts.temp.data.datasets[0].data.shift();
         state.charts.temp.data.datasets[1].data.shift();
-      }
-      state.charts.temp.update('none');
+    }
+    state.charts.temp.update('none');
 
       // Processos
       updateProcessList(data.top_processes || []);
@@ -927,7 +982,7 @@
       const header = table.createTHead();
       const headerRow = header.insertRow();
       
-      ['PID', 'Nome', 'CPU %', 'Memória %'].forEach(text => {
+      ['PID', 'Nome', 'CPU %', 'Memória %', 'username', 'status'].forEach(text => {
         const th = document.createElement('th');
         th.textContent = text;
         th.className = 'text-left p-3 text-gray-400 font-medium text-sm';
@@ -948,6 +1003,9 @@
       
       processList.innerHTML = '';
       processList.appendChild(table);
+      if (data.top_processes) {
+        updateProcessList(data.top_processes);
+    }
     }
 
     // Atualiza dados manualmente
@@ -987,6 +1045,55 @@
         }
       }, 1000);
     });
+
+    function updateProcessList(processes) {
+    const processList = document.getElementById('processList');
+    processList.innerHTML = ''; // Limpa a lista
+    
+    if (!processes || processes.length === 0) {
+        processList.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-gray-400 py-4">
+                    Nenhum processo encontrado
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Adiciona cada processo à tabela
+    processes.forEach((proc, index) => {
+        const row = document.createElement('tr');
+        row.className = `hover:bg-gray-800 transition-colors ${index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-850'}`;
+        
+        row.innerHTML = `
+            <td class="p-3 text-gray-300 font-mono text-sm">${proc.pid}</td>
+            <td class="p-3 text-gray-100 font-medium text-sm truncate max-w-xs" title="${proc.name}">
+                ${proc.name}
+            </td>
+            <td class="p-3 text-gray-300 font-mono text-sm">
+                <span class="${proc.cpu_percent > 10 ? 'text-red-400' : 'text-green-400'}">
+                    ${proc.cpu_percent}%
+                </span>
+            </td>
+            <td class="p-3 text-gray-300 font-mono text-sm">
+                ${proc.memory_percent}%
+            </td>
+            
+
+            <td class="p-3 text-gray-300 font-mono text-sm">
+                ${proc.username}
+            </td>
+
+            <td class="p-3 text-gray-300 font-mono text-sm">
+                ${proc.status}
+            </td>
+        `;
+        
+        processList.appendChild(row);
+    });
+}
+
   </script>
 </body>
 </html>
