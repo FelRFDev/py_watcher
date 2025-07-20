@@ -40,7 +40,7 @@ Este é um projeto de dashboard de monitoramento do sistema, desenvolvido com Dj
 - OpenHardwareMonitor (no Windows, executado como administrador) Download: ([Clique aqui](https://openhardwaremonitor.org/downloads/))
 - Após baixar o OpenHardware, extraia os arquivos e mova a pasta para dentro da pasta raiz do projeto. Em seguida, execute o programa como administrador.
 - Feito isso, vá até options e marque as opções "start minimized" e "log sensors"
-- ATENÇÂO, este procedimento é obrigatório para que possa ser feito a coleta de dados como temperatura e etc.
+- ATENÇÃO, este procedimento é obrigatório para que possa ser feito a coleta de dados como temperatura e etc.
 - Docker (opcional, se quiser monitorar containers)
 
 
