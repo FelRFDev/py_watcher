@@ -10,6 +10,7 @@ import pandas as pd
 from datetime import datetime
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.exceptions import StopConsumer
+from .dockerstats import get_docker_info
 
 class SystemMonitorConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -219,3 +220,34 @@ class SystemMonitorConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Error reading temperature data: {e}")
             return {}
+
+
+class DockerMonitorConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.accept()
+        await self.send_docker_data()
+        
+    async def disconnect(self, close_code):
+        pass
+        
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        if data.get('type') == 'refresh':
+            await self.send_docker_data()
+    
+    async def send_docker_data(self):
+        while True:
+            try:
+                docker_data = get_docker_info()  # Use sua função existente
+                await self.send(json.dumps({
+                    "type": "docker_data",
+                    "containers": docker_data['containers'],
+                    "summary": docker_data['summary']
+                }))
+            except Exception as e:
+                print(f"Error sending docker data: {e}")
+                await self.send(json.dumps({
+                    "type": "error",
+                    "message": str(e)
+                }))
+            await asyncio.sleep(2) 
