@@ -43,8 +43,22 @@ def index(request):
 
 
 def docker_dashboard(request):
-    docker_data = get_docker_info()
-    return render(request, 'dockerdash.html', {
-        'containers': docker_data['containers'],
-        'summary': docker_data['summary']
-    })
+    # Carrega apenas o essencial para a primeira renderização
+    try:
+        docker_data = get_docker_info()
+        return render(request, 'dockerdash.html', {
+            'containers': docker_data['containers'],
+            'summary': docker_data['summary']
+        })
+    except Exception as e:
+        print(f"Erro ao carregar dados Docker: {e}")
+        # Fallback com dados vazios
+        return render(request, 'dockerdash.html', {
+            'containers': [],
+            'summary': {
+                'total': 0,
+                'running': 0,
+                'paused': 0,
+                'exited': 0
+            }
+        })

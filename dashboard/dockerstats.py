@@ -1,8 +1,5 @@
 import docker
 
-
-import docker
-
 def get_docker_info():
     client = docker.from_env()
     containers = client.containers.list(all=True)
