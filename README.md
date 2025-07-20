@@ -30,17 +30,24 @@ Este é um projeto de dashboard de monitoramento do sistema, desenvolvido com Dj
 
 ---
 
-## 🧩 ANTES DE TUDO LEIA COM ATENÇÃO! Requisitos:
+Requisitos:
 
 - Python 3.10+
 - Redis instalado e rodando
 - Ambiente com Ubuntu (via WSL ou nativo) **ou Windows**
 - Django
 - OpenHardwareMonitor (no Windows, executado como administrador) Download: ([Clique aqui](https://openhardwaremonitor.org/downloads/))
+- Docker (opcional, se quiser monitorar containers)
+
+## 🧩 ANTES DE TUDO LEIA COM ATENÇÃO!
+
+- ATENÇÃO, este procedimento é obrigatório para que possa ser feito a coleta de dados como temperatura e etc.
+
+
 - Após baixar o OpenHardware, extraia os arquivos e mova a pasta para dentro da pasta raiz do projeto. Em seguida, execute o programa como administrador.
 - Feito isso, vá até options e marque as opções "start minimized" e "log sensors"
-- ATENÇÃO, este procedimento é obrigatório para que possa ser feito a coleta de dados como temperatura e etc.
-- Docker (opcional, se quiser monitorar containers)
+- Ao executar o OpenHardware, ele gera um arquivo xml com os dados coletados. No arquivo consumer.py na pasta dashboard, 
+vá até o método get_temperature_data e insira em REL_PATH o caminho(path) para a pasta do OpenHardware que está na raiz do projeto, finalizando assim este procedimento. Para obter o path, caso esteja no VSCODE basta clicar com o botão direito na pasta e clicar em CopyRelativePath. 
 
 
 ## 🚀 Instalação
@@ -171,7 +178,7 @@ Abra no navegador: http://127.0.0.1:8000
 
 ## 👨‍💻 Autor
 
-Felipe ([@felrfdev](https://www.instagram.com/felrfdev/))  
+Felipe Rodrigues Fonseca (felrfdev) ([Porfolio](https://felrfdev.netlify.app))  
 Projeto criado com fins educacionais, acadêmicos e para aprendizado contínuo.
 
 ---
