@@ -5,6 +5,16 @@
 
 Este é um projeto de dashboard de monitoramento do sistema, desenvolvido com Django, que exibe o uso de CPU, RAM, disco, **temperatura de componentes (GPU, CPU, placa-mãe)** e outras informações do sistema operacional em tempo real. Utiliza Redis para comunicação assíncrona entre os processos e coleta os dados diretamente do sistema operacional. Também permite o monitoramento de **containers Docker** com suporte básico.
 
+
+<h3 id="Screenshots">📸 Screenshot (Clique na imagem para ampliar!)</h3>
+<div align="center">
+<img src="https://github.com/user-attachments/assets/adf32b00-5345-4253-ada1-27b58a0c5a3f" align="center" height="300" width="700" >
+  <br><br><br>
+<img src="https://github.com/user-attachments/assets/09f4593a-dbb6-4f17-ab8a-b341be06419f" align="center" height="300" width="700" >
+</div>
+
+
+
 ---
 
 ## 📌 Funcionalidades
